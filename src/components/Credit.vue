@@ -226,6 +226,7 @@ export default {
         this.xendit.card.createToken(tokenData, this.handleToken);
       }
     },
+    // handleToken will be called twice. first during tokenization, second after 3DS completes
     handleToken: function (err, data) {
       if (err) {
         this.success_valid = true;
@@ -234,50 +235,27 @@ export default {
         if (data.status === "VERIFIED") {
           this.success_valid = true;
           localStorage.setItem("tokenResponse", JSON.stringify(data));
-          // var token = JSON.parse(localStorage.getItem("tokenResponse"));
           this.success_message = "Verifikasi Berhasil";
           this.error_message = "";
+          this.isHide = false; // Close 3DS modal
+          
+          // Over here, send data.id data.authentication_id to the charge endpoint https://developers.xendit.co/api-reference/#create-charge
+          // You will need to call the charge endpoint from your backend server as it uses your private key
+          // The request should use the flow below:
+          // Front end -> Your backend -> Xendit Servers
         } else if (data.status === "IN_REVIEW") {
           console.log(data)
           localStorage.setItem("tokenResponse", JSON.stringify(data));
-          this.authenticate(err, data)
-          // // token = JSON.parse(localStorage.getItem("tokenResponse"));
-          // this.success_message = "Verifikasi Berhasil";
-          // this.error_message = "";
+          this.authenticate(data)
         } else if (data.status === "FAILED") {
           console.log(data.id);
           alert(data.status);
         }
       }
     },
-    authenticate: function (err, creditCardCharge) {        
-      if (err) {        
-        // Show the errors on the form        
-        // $('#error pre').text(err.message);        
-        // $('#error').show();        
-        // $form.find('.submit').prop('disabled', false); // Re-enable submission        
-            
-        return;        
-      }        
-            
-      if (creditCardCharge.status === 'VERIFIED') {        
-        // Get the token ID:        
-        var token = creditCardCharge.id;        
-            console.log(token)
-        // Insert the token into the form so it gets submitted to the server:        
-        // $form.append($('<input type="hidden" name="xenditToken" />').val(token));        
-            
-        // // Submit the form to your server:        
-        // $form.get(0).submit();        
-      } else if (creditCardCharge.status === 'IN_REVIEW') {  
+    authenticate: function (creditCardCharge) {        
        this.isHide = true
         window.open(creditCardCharge.payer_authentication_url, 'sample-inline-frame');        
-        // $('#three-ds-container').show();        
-      } else if (creditCardCharge.status === 'FAILED') {        
-        // $('#error pre').text(creditCardCharge.failure_reason);        
-        // $('#error').show();        
-        // $form.find('.submit').prop('disabled', false); // Re-enable submission        
-      }      
     }
   },
 };
